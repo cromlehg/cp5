@@ -326,7 +326,6 @@ contract PurchaseBonusCrowdsale is Pausable {
 
   function removeBonus(uint8 number) onlyOwner {
     require(number < bonuses.length);
-    Bonus storage bonus = bonuses[number];
 
     delete bonuses[number];
 
@@ -367,9 +366,11 @@ contract PurchaseBonusCrowdsale is Pausable {
 
   function getBonus(uint value) constant returns(uint) {
     uint targetBonus = 0;
+    if(value < bonuses[0].limit)
+      return 0;
     for (uint i = bonuses.length; i > 0; i--) {
       Bonus storage bonus = bonuses[i - 1];
-      if (value < bonus.limit)
+      if (value >= bonus.limit)
         return bonus.bonus;
       else
         targetBonus = bonus.bonus;
