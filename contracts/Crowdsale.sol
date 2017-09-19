@@ -337,12 +337,12 @@ contract PurchaseBonusCrowdsale is Pausable {
     bonuses.length--;
   }
 
-  function changeBonus(uint8 number, uint limit, uint bonus) onlyOwner {
+  function changeBonus(uint8 number, uint limit, uint bonusValue) onlyOwner {
     require(number < bonuses.length);
-    Bonuses storage bonus = bonuses[number];
+    Bonus storage bonus = bonuses[number];
 
-    bonus.period = period;
-    bonus.bonus = bonus;
+    bonus.limit = limit;
+    bonus.bonus = bonusValue;
   }
 
   function insertBonus(uint8 numberAfter, uint limit, uint bonus) onlyOwner {
@@ -354,7 +354,7 @@ contract PurchaseBonusCrowdsale is Pausable {
       bonuses[i + 1] = bonuses[i];
     }
 
-    bonuses[numberAfter + 1] = Bonus(period, bonus);
+    bonuses[numberAfter + 1] = Bonus(limit, bonus);
   }
 
   function clearBonuses() onlyOwner {
@@ -365,10 +365,10 @@ contract PurchaseBonusCrowdsale is Pausable {
     bonuses.length -= bonuses.length;
   }
 
-  function getBonus() constant returns(uint) {
-    int targetBonus = 0;
-    for (int i = values.length - 1; i >= 0; i--) {
-      Bonus storage bonus = bonuses[i];
+  function getBonus(uint value) constant returns(uint) {
+    uint targetBonus = 0;
+    for (uint i = bonuses.length; i > 0; i--) {
+      Bonus storage bonus = bonuses[i - 1];
       if (value < bonus.limit)
         return bonus.bonus;
       else
@@ -405,12 +405,39 @@ contract Crowdsale is PurchaseBonusCrowdsale {
  
   uint public price;
 
-  uint public percentRate = 100;
+  uint public percentRate = 1000;
 
-  SGTToken public token = new SGTToken();
+  SGAToken public token = new SGAToken();
 
   function Crowdsale() {
-    //configure
+    period = 60;
+    start = 1505998800;
+    hardCap = 186000000000000000000000;
+    foundersTokensPercent = 202;
+    foundersTokensWallet = 0x839D81F27B870632428fab6ae9c5903936a4E5aE;
+    multisigWallet = 0x0CeeD87a6b8ac86938B6c2d1a0fA2B2e9000Cf6c;
+    secondWallet = 0x949e62320992D5BD123B4616d2E2769473101AbB;
+    secondWalletPercent = 10;
+    addBonus(1,5);
+    addBonus(2,10);
+    addBonus(3,15);
+    addBonus(5,20);
+    addBonus(7,25);
+    addBonus(10,30);
+    addBonus(15,35);
+    addBonus(20,40);
+    addBonus(50,45);
+    addBonus(75,50);
+    addBonus(100,55);
+    addBonus(150,60);
+    addBonus(200,70);
+    addBonus(300,75);
+    addBonus(500,80);
+    addBonus(750,90);
+    addBonus(1000,100);
+    addBonus(1500,110);
+    addBonus(2000,125);
+    addBonus(3000,140);
   }
 
   modifier saleIsOn() {
@@ -431,20 +458,8 @@ contract Crowdsale is PurchaseBonusCrowdsale {
     start = newStart;
   }
 
-  function setStart(uint newPeriod) onlyOwner {
-    period = newPeriod;
-  }
-
   function setHardcap(uint newHardcap) onlyOwner {
-    hardcap = newHardcap;
-  }
-
-  function setHardcap(uint newHardcap) onlyOwner {
-    hardcap = newHardcap;
-  }
-
-  function setPrice(uint newPrice) onlyOwner {
-    price = newPrice;
+    hardCap = newHardcap;
   }
 
   function setPrice(uint newPrice) onlyOwner {
@@ -455,7 +470,7 @@ contract Crowdsale is PurchaseBonusCrowdsale {
     foundersTokensPercent = newFoundersTokensPercent;
   }
 
-  function setSecondWallet(uint newSecondWallet) onlyOwner {
+  function setSecondWallet(address newSecondWallet) onlyOwner {
     secondWallet = newSecondWallet;
   }
   
