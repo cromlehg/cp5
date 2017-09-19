@@ -504,6 +504,7 @@ contract Crowdsale is PurchaseBonusCrowdsale {
 
   function createTokens() whenNotPaused isUnderHardCap saleIsOn payable {
     require(msg.value >= minPrice);
+    balances[msg.sender] = balances[msg.sender].add(msg.value);
     invested = invested.add(msg.value);
     uint bonusPercent = getBonus(msg.value);
     uint tokens = msg.value.mul(price);
