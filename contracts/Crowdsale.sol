@@ -529,6 +529,7 @@ contract Crowdsale is PurchaseBonusCrowdsale {
       uint issuedTokenSupply = token.totalSupply();
       uint foundersTokens = issuedTokenSupply.mul(foundersTokensPercent).div(percentRate - foundersTokensPercent);
       token.mint(this, foundersTokens);
+      token.transferAllowed();
       token.transfer(foundersTokensWallet, foundersTokens);
     }
     token.finishMinting();
