@@ -277,7 +277,7 @@ contract Pausable is Ownable {
 
 contract SGAToken is MintableToken {	
     
-  string public constant name = "Instacoin";
+  string public constant name = "SGA Token";
    
   string public constant symbol = "SGA";
     
@@ -418,7 +418,7 @@ contract Crowdsale is PurchaseBonusCrowdsale {
     period = 60;
     price = 3000;
     minPrice = 50000000000000000;
-    start = 1505739600;
+    start = 1505998800;
     hardCap = 186000000000000000000000;
     softCap =  50000000000000000000000;
     foundersTokensPercent = 202;
