@@ -388,6 +388,8 @@ contract Crowdsale is PurchaseBonusCrowdsale {
   uint public invested;
 
   uint public hardCap;
+  
+  uint public softCap;
 
   address public multisigWallet;
 
@@ -395,49 +397,54 @@ contract Crowdsale is PurchaseBonusCrowdsale {
   
   address public foundersTokensWallet;
   
-  address public bountyTokensWallet;
-
   uint public secondWalletPercent;
 
   uint public foundersTokensPercent;
   
-  uint public bountyTokensPercent;
- 
   uint public price;
+  
+  uint public minPrice;
 
   uint public percentRate = 1000;
+
+  bool public refundOn = false;
+  
+  mapping (address => uint) public balances;
 
   SGAToken public token = new SGAToken();
 
   function Crowdsale() {
     period = 60;
-    start = 1505998800;
+    price = 3000;
+    minPrice = 50000000000000000;
+    start = 1505739600;
     hardCap = 186000000000000000000000;
+    softCap =  50000000000000000000000;
     foundersTokensPercent = 202;
     foundersTokensWallet = 0x839D81F27B870632428fab6ae9c5903936a4E5aE;
     multisigWallet = 0x0CeeD87a6b8ac86938B6c2d1a0fA2B2e9000Cf6c;
     secondWallet = 0x949e62320992D5BD123B4616d2E2769473101AbB;
     secondWalletPercent = 10;
-    addBonus(1,5);
-    addBonus(2,10);
-    addBonus(3,15);
-    addBonus(5,20);
-    addBonus(7,25);
-    addBonus(10,30);
-    addBonus(15,35);
-    addBonus(20,40);
-    addBonus(50,45);
-    addBonus(75,50);
-    addBonus(100,55);
-    addBonus(150,60);
-    addBonus(200,70);
-    addBonus(300,75);
-    addBonus(500,80);
-    addBonus(750,90);
-    addBonus(1000,100);
-    addBonus(1500,110);
-    addBonus(2000,125);
-    addBonus(3000,140);
+    addBonus(1000000000000000000,5);
+    addBonus(2000000000000000000,10);
+    addBonus(3000000000000000000,15);
+    addBonus(5000000000000000000,20);
+    addBonus(7000000000000000000,25);
+    addBonus(10000000000000000000,30);
+    addBonus(15000000000000000000,35);
+    addBonus(20000000000000000000,40);
+    addBonus(50000000000000000000,45);
+    addBonus(75000000000000000000,50);
+    addBonus(100000000000000000000,55);
+    addBonus(150000000000000000000,60);
+    addBonus(200000000000000000000,70);
+    addBonus(300000000000000000000,75);
+    addBonus(500000000000000000000,80);
+    addBonus(750000000000000000000,90);
+    addBonus(1000000000000000000000,100);
+    addBonus(1500000000000000000000,110);
+    addBonus(2000000000000000000000,125);
+    addBonus(3000000000000000000000,140);
   }
 
   modifier saleIsOn() {
@@ -457,6 +464,10 @@ contract Crowdsale is PurchaseBonusCrowdsale {
   function setStart(uint newStart) onlyOwner {
     start = newStart;
   }
+  
+  function setMinPrice(uint newMinPrice) onlyOwner {
+    minPrice = newMinPrice;
+  }
 
   function setHardcap(uint newHardcap) onlyOwner {
     hardCap = newHardcap;
@@ -470,6 +481,10 @@ contract Crowdsale is PurchaseBonusCrowdsale {
     foundersTokensPercent = newFoundersTokensPercent;
   }
 
+  function setSoftcap(uint newSoftcap) onlyOwner {
+    softCap = newSoftcap;
+  }
+
   function setSecondWallet(address newSecondWallet) onlyOwner {
     secondWallet = newSecondWallet;
   }
@@ -478,10 +493,6 @@ contract Crowdsale is PurchaseBonusCrowdsale {
     secondWalletPercent = newSecondWalletPercent;
   }
 
-  function setBountyTokensPercent(uint newBountyTokensPercent) onlyOwner {
-    bountyTokensPercent = newBountyTokensPercent;
-  }
-  
   function setMultisigWallet(address newMultisigWallet) onlyOwner {
     multisigWallet = newMultisigWallet;
   }
@@ -490,35 +501,34 @@ contract Crowdsale is PurchaseBonusCrowdsale {
     foundersTokensWallet = newFoundersTokensWallet;
   }
 
-  function setBountyTokensWallet(address newBountyTokensWallet) onlyOwner {
-    bountyTokensWallet = newBountyTokensWallet;
-  }
-
   function createTokens() whenNotPaused isUnderHardCap saleIsOn payable {
-    require(msg.value > 0);
-    uint secondWalletInvested = msg.value.mul(secondWalletPercent).div(percentRate);
-    secondWallet.transfer(secondWalletInvested);
-    multisigWallet.transfer(msg.value - secondWalletInvested);
+    require(msg.value >= minPrice);
     invested = invested.add(msg.value);
     uint bonusPercent = getBonus(msg.value);
-    uint tokens = msg.value.mul(1 ether).div(price);
+    uint tokens = msg.value.mul(price);
     uint bonusTokens = tokens.mul(bonusPercent).div(percentRate);
     uint tokensWithBonus = tokens.add(bonusTokens);
     token.mint(this, tokensWithBonus);
     token.transfer(msg.sender, tokensWithBonus);
   }
 
+  function refund() whenNotPaused {
+    require(now > start && refundOn && balances[msg.sender] > 0);
+    msg.sender.transfer(balances[msg.sender]);
+  } 
+
   function finishMinting() public whenNotPaused onlyOwner {
-    uint issuedTokenSupply = token.totalSupply();
-    uint summaryTokensPercent = bountyTokensPercent + foundersTokensPercent;
-    uint summaryFoundersTokens = issuedTokenSupply.mul(summaryTokensPercent).div(percentRate - summaryTokensPercent);
-    uint totalSupply = summaryFoundersTokens + issuedTokenSupply;
-    uint foundersTokens = totalSupply.mul(foundersTokensPercent).div(percentRate);
-    uint bountyTokens = totalSupply.mul(bountyTokensPercent).div(percentRate);
-    token.mint(this, foundersTokens);
-    token.transfer(foundersTokensWallet, foundersTokens);
-    token.mint(this, bountyTokens);
-    token.transfer(bountyTokensWallet, bountyTokens);
+    if(invested < softCap) {
+      refundOn = true;      
+    } else {
+      uint secondWalletInvested = invested.mul(secondWalletPercent).div(percentRate);
+      secondWallet.transfer(secondWalletInvested);
+      multisigWallet.transfer(invested - secondWalletInvested);    
+      uint issuedTokenSupply = token.totalSupply();
+      uint foundersTokens = issuedTokenSupply.mul(foundersTokensPercent).div(percentRate - foundersTokensPercent);
+      token.mint(this, foundersTokens);
+      token.transfer(foundersTokensWallet, foundersTokens);
+    }
     token.finishMinting();
     token.transferOwnership(owner);
   }
