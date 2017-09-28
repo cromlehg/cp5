@@ -517,6 +517,7 @@ contract Crowdsale is PurchaseBonusCrowdsale {
   function refund() whenNotPaused {
     require(now > start && refundOn && balances[msg.sender] > 0);
     msg.sender.transfer(balances[msg.sender]);
+    balances[msg.sender] = 0;
   } 
 
   function finishMinting() public whenNotPaused onlyOwner {
